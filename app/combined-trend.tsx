@@ -1,11 +1,15 @@
 'use client';
 
 import {useId,useEffect,useRef,useState} from 'react';
-import {Activity, Bike, Dumbbell, Footprints, Car, NotebookPen} from 'lucide-react';
+import {Activity, Bike, createLucideIcon, Footprints, Car, NotebookPen} from 'lucide-react';
 import {Day, dateLabel, painRange, total} from '@/lib/records';
 
+const BadmintonRacket=createLucideIcon('BadmintonRacket',[
+ ['ellipse',{cx:'15',cy:'8',rx:'5',ry:'7',transform:'rotate(40 15 8)',key:'head'}],
+ ['path',{d:'m10.5 13.5-3 3M3 21l4.5-4.5M12 4l7 6M10 7l7 6M14 3l-4 8M17 4l-5 9M20 6l-5 8',key:'strings'}],
+]);
 const activityIcons:Record<string,typeof Bike>={
- '자전거 등하교':Bike,'학교체육활동':Dumbbell,'산책':Footprints,'차로외출':Car,
+ '자전거 등하교':Bike,'학교체육활동':BadmintonRacket,'산책':Footprints,'차로외출':Car,
 };
 
 export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(day:Day)=>void}){
@@ -20,11 +24,11 @@ export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(da
   const date=new Date(start+i*86400000).toISOString().slice(0,10);
   return {date,record:byDate.get(date)};
  });
- const width=Math.max(640,availableWidth,slots.length*90+120),left=58,right=58,top=40,bottom=290;
+ const width=Math.max(availableWidth,slots.length*60+116),left=58,right=58,top=40,bottom=290;
  const step=(width-left-right)/slots.length;
  const maxTime=Math.max(30,Math.ceil(Math.max(...records.map(total))/30)*30);
  const x=(i:number)=>left+(i+.5)*step;
- const yPain=(n:number)=>bottom-n/5*(bottom-top);
+ const yPain=(n:number)=>bottom-Math.min(n,4)/4*(bottom-top);
  const yTime=(n:number)=>bottom-n/maxTime*(bottom-top);
  let line='';let connected=false;
  slots.forEach(({record},i)=>{
@@ -34,14 +38,14 @@ export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(da
  });
  return <section className="combined-trend">
   <div className="trend-heading"><h2><Activity size={21}/>통증과 운동의 변화</h2><div className="trend-legend"><span><i className="gradient-key"/>통증 범위</span><span><i className="line-key"/>운동 시간</span></div></div>
-  <p className="trend-help">통증은 왼쪽 눈금(0–5), 운동 시간은 오른쪽 눈금(분)으로 읽어요.</p>
+  <p className="trend-help">통증은 왼쪽 눈금(0–4), 운동 시간은 오른쪽 눈금(분)으로 읽어요.</p>
   <div ref={scrollRef} className="trend-scroll" tabIndex={0} role="region" aria-label="날짜별 통증과 운동 그래프. 좌우로 스크롤할 수 있습니다.">
    <div className="trend-canvas" style={{width}}>
     <svg width="100%" viewBox={`0 0 ${width} 315`} role="img" aria-label="날짜를 가로축으로 한 통증 최저–최고 범위 막대와 운동 시간 선 그래프">
-     <defs><linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1={0} y1={bottom} x2={0} y2={top} colorInterpolation="sRGB"><stop offset="0%" stopColor="#3273ed"/><stop offset="20%" stopColor="#3273ed"/><stop offset="40%" stopColor="#facc15"/><stop offset="60%" stopColor="#f97316"/><stop offset="80%" stopColor="#ef4444"/><stop offset="100%" stopColor="#ef4444"/></linearGradient></defs>
+     <defs><linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1={0} y1={bottom} x2={0} y2={top} colorInterpolation="sRGB"><stop offset="0%" stopColor="#3273ed"/><stop offset="25%" stopColor="#3273ed"/><stop offset="50%" stopColor="#facc15"/><stop offset="75%" stopColor="#f97316"/><stop offset="100%" stopColor="#ef4444"/></linearGradient></defs>
      <text x={left-12} y={20} textAnchor="end" className="trend-axis-label">통증</text><text x={width-right+12} y={20} className="trend-axis-label">분</text>
-     {[0,1,2,3,4,5].map(n=><g key={n}><line x1={left} x2={width-right} y1={yPain(n)} y2={yPain(n)} stroke="#e4eaf3" strokeDasharray={n?'3 5':undefined}/><text x={left-14} y={yPain(n)+5} textAnchor="end" className="trend-tick">{n}</text><text x={width-right+14} y={yPain(n)+5} className="trend-tick">{Math.round(maxTime*n/5)}</text></g>)}
-     {slots.map(({date,record},i)=>{const r=record?painRange(record):null;if(!r)return null;const high=yPain(r[1]),low=yPain(r[0]);return <g key={date}><rect x={x(i)-13} y={high===low?high-2:high} width={26} height={Math.max(4,low-high)} rx={Math.min(8,Math.max(2,(low-high)/2))} fill={`url(#${gradientId})`} opacity=".9"><title>{dateLabel(date)}: 통증 {r[0]}–{r[1]}</title></rect><text x={x(i)+19} y={(high+low)/2+4} className="trend-range-value">{r[0]===r[1]?r[0]:`${r[0]}–${r[1]}`}</text></g>;})}
+     {[0,1,2,3,4].map(n=><g key={n}><line x1={left} x2={width-right} y1={yPain(n)} y2={yPain(n)} stroke="#e4eaf3" strokeDasharray={n?'3 5':undefined}/><text x={left-14} y={yPain(n)+5} textAnchor="end" className="trend-tick">{n}</text><text x={width-right+14} y={yPain(n)+5} className="trend-tick">{Math.round(maxTime*n/4)}</text></g>)}
+     {slots.map(({date,record},i)=>{const r=record?painRange(record):null;if(!r)return null;const high=yPain(r[1]),low=yPain(r[0]);return <g key={date}><rect x={x(i)-13} y={high===low?high-2:high} width={26} height={Math.max(4,low-high)} rx={Math.min(8,Math.max(2,(low-high)/2))} fill={`url(#${gradientId})`} opacity=".9"><title>{dateLabel(date)}: 통증 {r[0]}–{r[1]}</title></rect><text x={x(i)} y={(high+low)/2+4} textAnchor="middle" className="trend-range-value">{r[0]===r[1]?r[0]:`${r[0]}–${r[1]}`}</text></g>;})}
      <path d={line} fill="none" stroke="#183b55" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"/>
      {slots.map(({date,record},i)=>record&&record.sessions.some(s=>s.minutes.some(m=>m!==''))?<g key={date}><circle cx={x(i)} cy={yTime(total(record))} r={4.5} fill="#fff" stroke="#183b55" strokeWidth={2.5}><title>{dateLabel(date)}: 운동 {total(record)}분</title></circle><text x={x(i)} y={yTime(total(record))-12} textAnchor="middle" className="trend-time-value">{total(record)}분</text></g>:null)}
     </svg>
