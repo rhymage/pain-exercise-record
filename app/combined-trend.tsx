@@ -1,8 +1,9 @@
 'use client';
 
 import {useId,useEffect,useRef,useState} from 'react';
-import {Activity, Bike, createLucideIcon, Footprints, Car, NotebookPen} from 'lucide-react';
-import {Day, dateLabel, painRange, total} from '@/lib/records';
+import {Activity, Bike, createLucideIcon, Footprints, Car, NotebookPen, StickyNote} from 'lucide-react';
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip';
+import {Day, dateLabel, weekdayLabel, painRange, total} from '@/lib/records';
 
 const BadmintonRacket=createLucideIcon('BadmintonRacket',[
  ['ellipse',{cx:'15',cy:'8',rx:'5',ry:'7',transform:'rotate(40 15 8)',key:'head'}],
@@ -42,7 +43,7 @@ export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(da
   if(!record||!hasTime){connected=false;return;}
   line+=`${connected?'L':'M'} ${x(i)} ${yTime(total(record))} `;connected=true;
  });
- return <section className="combined-trend">
+ return <TooltipProvider delayDuration={150}><section className="combined-trend">
   <div className="trend-heading"><h2><Activity size={21}/>통증과 운동의 변화</h2><div className="trend-legend"><span><i className="gradient-key"/>통증 범위</span><span><i className="line-key"/>운동 시간</span></div></div>
   <p className="trend-help">통증은 왼쪽 눈금(0–5), 운동 시간은 오른쪽 눈금(분)으로 읽어요. 막대 위는 최댓값, 아래는 최솟값이에요.</p>
   <div ref={scrollRef} className="trend-scroll" tabIndex={0} role="region" aria-label="날짜별 통증과 운동 그래프. 좌우로 스크롤할 수 있습니다.">
@@ -56,11 +57,11 @@ export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(da
      {slots.map(({date,record},i)=>record&&record.sessions.some(s=>s.minutes.some(m=>m!==''))?<g key={date}><circle cx={x(i)} cy={yTime(total(record))} r={4.5} fill="#fff" stroke="#183b55" strokeWidth={2.5}><title>{`${dateLabel(date)}: 운동 ${total(record)}분`}</title></circle><text x={x(i)} y={timeLabelY(record)} textAnchor="middle" className="trend-time-value">{total(record)}분</text></g>:null)}
     </svg>
     <div className="trend-dates" style={{paddingLeft:left,paddingRight:right,gridTemplateColumns:`repeat(${slots.length},minmax(0,1fr))`}}>
-     {slots.map(({date,record})=><div className="trend-day" key={date}><button className="trend-date" disabled={!record} onClick={()=>record&&onOpen(record)} aria-label={`${dateLabel(date)}, ${record?'통증 '+(painRange(record)?.join('–')??'미기록')+', 운동 '+(record.sessions.some(s=>s.minutes.some(m=>m!==''))?total(record)+'분':'미기록')+', 기록 열기':'미기록'}`}><span>{date.slice(5).replace('-','.')}</span><small>{date.slice(0,4)}</small></button><div className="trend-day-icons">{record?.activities.map(a=>{const Icon=activityIcons[a]||Activity;return <button key={a} className="trend-activity-icon" title={a} aria-label={`${dateLabel(date)} ${a} 상세보기`} onClick={()=>onOpen(record)}><Icon size={18}/></button>;})}{record?.customActivity&&<button className="trend-activity-icon custom" title={record.customActivity} aria-label={`${dateLabel(date)} 추가 활동: ${record.customActivity}`} onClick={()=>onOpen(record)}><NotebookPen size={18}/></button>}{!record?.activities.length&&!record?.customActivity&&<span className="trend-no-activity">—</span>}</div></div>)}
+     {slots.map(({date,record})=><div className="trend-day" key={date}><button className="trend-date" disabled={!record} onClick={()=>record&&onOpen(record)} aria-label={`${dateLabel(date)}, ${record?'통증 '+(painRange(record)?.join('–')??'미기록')+', 운동 '+(record.sessions.some(s=>s.minutes.some(m=>m!==''))?total(record)+'분':'미기록')+', 기록 열기':'미기록'}`}><span>{date.slice(5).replace('-','.')}</span><span className="trend-weekday">{weekdayLabel(date)}</span><small>{date.slice(0,4)}</small></button><div className="trend-day-icons">{record?.activities.map(a=>{const Icon=activityIcons[a]||Activity;return <button key={a} className="trend-activity-icon" title={a} aria-label={`${dateLabel(date)} ${a} 상세보기`} onClick={()=>onOpen(record)}><Icon size={18}/></button>;})}{record?.customActivity&&<button className="trend-activity-icon custom" title={record.customActivity} aria-label={`${dateLabel(date)} 추가 활동: ${record.customActivity}`} onClick={()=>onOpen(record)}><NotebookPen size={18}/></button>}{record?.notes.trim()&&<Tooltip><TooltipTrigger asChild><button className="trend-activity-icon memo" aria-label={`${dateLabel(date)} 특이사항 메모 보기`} onClick={()=>onOpen(record)}><StickyNote size={18}/></button></TooltipTrigger><TooltipContent className="trend-note-tooltip" side="top" sideOffset={8} collisionPadding={16}>{record.notes}</TooltipContent></Tooltip>}{!record?.activities.length&&!record?.customActivity&&!record?.notes.trim()&&<span className="trend-no-activity">—</span>}</div></div>)}
     </div>
    </div>
   </div>
-  <div className="activity-icon-legend">{Object.entries(activityIcons).map(([name,Icon])=><span key={name}><Icon size={16}/>{name}</span>)}<span><NotebookPen size={16}/>직접 입력</span></div>
-  <p className="trend-footnote">날짜나 아이콘을 누르면 상세 기록이 열려요. 기록이 없는 날은 선을 연결하지 않아요.</p>
- </section>;
+  <div className="activity-icon-legend">{Object.entries(activityIcons).map(([name,Icon])=><span key={name}><Icon size={16}/>{name}</span>)}<span><NotebookPen size={16}/>직접 입력</span><span><StickyNote size={16}/>특이사항 메모</span></div>
+  <p className="trend-footnote">메모 아이콘에 마우스를 올리면 특이사항이 보여요. 날짜나 아이콘을 누르면 상세 기록이 열려요. 기록이 없는 날은 선을 연결하지 않아요.</p>
+ </section></TooltipProvider>;
 }
