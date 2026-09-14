@@ -1,23 +1,26 @@
 # 통증 운동 기록
 
-날짜별 아침·오후·밤 통증(0–4)과 세 가지 운동 시간을 기록하는 모바일 웹앱입니다.
+GitHub Pages에서 날짜별 아침·오후·밤 통증(0–5)과 운동 시간을 기록합니다.
 
-- 전체보기: 통증 최솟값–최댓값, 하루 운동 시간 합계, 추가 활동 내용
-- 가족용 접근 암호: 같은 기록 보기
-- 편집용 접근 암호: 입력과 수정
+- 사용 화면: https://app.rhymage.com/pain-exercise-record/
+- 비밀번호 없이 기록 조회·수정 가능 (주소를 아는 누구나 접근 가능)
+- 통증 막대 위에 최댓값, 아래에 최솟값 표시
+- 날짜당 최소 폭 60px, 학교체육활동은 배드민턴채 아이콘
 - 저장 버전 검사로 다른 기기의 변경을 덮어쓰지 않도록 보호
 
-## GitHub Pages
+## 운영 및 배포
 
-GitHub Pages serves the static frontend in `docs/`. Build it with:
+앞으로 사용자 화면은 GitHub Pages만 수정·배포합니다. 기존 ChatGPT Sites 서버는 기존 데이터베이스와 기록 API를 유지하는 용도로 사용하며, 루트 페이지는 GitHub Pages로 이동합니다. 서버 변경은 기록 저장·공유에 필요한 경우에만 배포합니다.
+
+GitHub Pages는 `main` 브랜치의 `docs/`를 배포합니다.
 
 ```
 npm ci
 npx vite build --config vite.pages.config.ts
 ```
 
-The frontend calls a separate authenticated API. GitHub does not store journal data or access codes. Access codes remain in memory only and are never embedded in the site bundle. Server-side code checks the access code digest and write permission for every request. The existing database is retained.
+빌드 후 `docs/.nojekyll`을 유지하고, `docs/index.html` 및 새 `docs/assets/` 파일을 소스와 함께 커밋합니다. `docs/`는 기본 제외되므로 새 배포 파일은 명시적으로 추가합니다. 기존 정적 파일은 캐시된 페이지를 위해 유지합니다.
 
-For the server, configure `RECORD_OWNER_ID`, `RECORD_ALLOWED_ORIGIN`, `RECORD_EDITOR_HASH`, and `RECORD_VIEWER_HASH` as runtime settings. Digests and owner identifiers are server-only. Never add real records, access codes, or local runtime folders to this repository.
+프런트엔드는 기존 서버의 `/api/records`를 호출합니다. 서버는 `RECORD_OWNER_ID`의 기존 기록을 그대로 사용하고 `RECORD_ALLOWED_ORIGIN`으로 브라우저 요청 출처를 제한합니다. 출처 제한은 사용자 인증 수단이 아니며, 조회·수정 API는 비밀번호 없이 사용할 수 있습니다. 소유자 설정이 없으면 요청을 거부합니다.
 
-The app uses React, Vite, and an authenticated Cloudflare D1 API. Existing records are imported; the original spreadsheet is not continuously synchronized.
+실제 기록, 계정 식별자, 로컬 실행 설정은 GitHub 저장소나 정적 파일에 넣지 않습니다. 기존 데이터베이스는 유지하며 원본 스프레드시트와 자동 동기화하지 않습니다.

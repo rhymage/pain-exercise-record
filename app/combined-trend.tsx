@@ -28,8 +28,14 @@ export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(da
  const step=(width-left-right)/slots.length;
  const maxTime=Math.max(30,Math.ceil(Math.max(...records.map(total))/30)*30);
  const x=(i:number)=>left+(i+.5)*step;
- const yPain=(n:number)=>bottom-Math.min(n,4)/4*(bottom-top);
+ const yPain=(n:number)=>bottom-n/5*(bottom-top);
  const yTime=(n:number)=>bottom-n/maxTime*(bottom-top);
+ const timeLabelY=(record:Day)=>{
+  const point=yTime(total(record)),range=painRange(record);
+  const labels=range?[yPain(range[1])-9,yPain(range[0])+17]:[];
+  const candidates=[point-12,point+20,point-28,point+36];
+  return candidates.find(y=>y>=16&&y<=307&&labels.every(label=>Math.abs(y-label)>=15))??point-12;
+ };
  let line='';let connected=false;
  slots.forEach(({record},i)=>{
   const hasTime=record?.sessions.some(s=>s.minutes.some(m=>m!==''));
@@ -38,16 +44,16 @@ export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(da
  });
  return <section className="combined-trend">
   <div className="trend-heading"><h2><Activity size={21}/>통증과 운동의 변화</h2><div className="trend-legend"><span><i className="gradient-key"/>통증 범위</span><span><i className="line-key"/>운동 시간</span></div></div>
-  <p className="trend-help">통증은 왼쪽 눈금(0–4), 운동 시간은 오른쪽 눈금(분)으로 읽어요.</p>
+  <p className="trend-help">통증은 왼쪽 눈금(0–5), 운동 시간은 오른쪽 눈금(분)으로 읽어요. 막대 위는 최댓값, 아래는 최솟값이에요.</p>
   <div ref={scrollRef} className="trend-scroll" tabIndex={0} role="region" aria-label="날짜별 통증과 운동 그래프. 좌우로 스크롤할 수 있습니다.">
    <div className="trend-canvas" style={{width}}>
     <svg width="100%" viewBox={`0 0 ${width} 315`} role="img" aria-label="날짜를 가로축으로 한 통증 최저–최고 범위 막대와 운동 시간 선 그래프">
-     <defs><linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1={0} y1={bottom} x2={0} y2={top} colorInterpolation="sRGB"><stop offset="0%" stopColor="#3273ed"/><stop offset="25%" stopColor="#3273ed"/><stop offset="50%" stopColor="#facc15"/><stop offset="75%" stopColor="#f97316"/><stop offset="100%" stopColor="#ef4444"/></linearGradient></defs>
+     <defs><linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1={0} y1={bottom} x2={0} y2={top} colorInterpolation="sRGB"><stop offset="0%" stopColor="#3273ed"/><stop offset="20%" stopColor="#3273ed"/><stop offset="40%" stopColor="#facc15"/><stop offset="60%" stopColor="#f97316"/><stop offset="80%" stopColor="#ef4444"/><stop offset="100%" stopColor="#ef4444"/></linearGradient></defs>
      <text x={left-12} y={20} textAnchor="end" className="trend-axis-label">통증</text><text x={width-right+12} y={20} className="trend-axis-label">분</text>
-     {[0,1,2,3,4].map(n=><g key={n}><line x1={left} x2={width-right} y1={yPain(n)} y2={yPain(n)} stroke="#e4eaf3" strokeDasharray={n?'3 5':undefined}/><text x={left-14} y={yPain(n)+5} textAnchor="end" className="trend-tick">{n}</text><text x={width-right+14} y={yPain(n)+5} className="trend-tick">{Math.round(maxTime*n/4)}</text></g>)}
-     {slots.map(({date,record},i)=>{const r=record?painRange(record):null;if(!r)return null;const high=yPain(r[1]),low=yPain(r[0]);return <g key={date}><rect x={x(i)-13} y={high===low?high-2:high} width={26} height={Math.max(4,low-high)} rx={Math.min(8,Math.max(2,(low-high)/2))} fill={`url(#${gradientId})`} opacity=".9"><title>{dateLabel(date)}: 통증 {r[0]}–{r[1]}</title></rect><text x={x(i)} y={(high+low)/2+4} textAnchor="middle" className="trend-range-value">{r[0]===r[1]?r[0]:`${r[0]}–${r[1]}`}</text></g>;})}
+     {[0,1,2,3,4,5].map(n=><g key={n}><line x1={left} x2={width-right} y1={yPain(n)} y2={yPain(n)} stroke="#e4eaf3" strokeDasharray={n?'3 5':undefined}/><text x={left-14} y={yPain(n)+5} textAnchor="end" className="trend-tick">{n}</text><text x={width-right+14} y={yPain(n)+5} className="trend-tick">{Math.round(maxTime*n/5)}</text></g>)}
+     {slots.map(({date,record},i)=>{const r=record?painRange(record):null;if(!r)return null;const high=yPain(r[1]),low=yPain(r[0]);return <g key={date}><rect x={x(i)-13} y={high===low?high-2:high} width={26} height={Math.max(4,low-high)} rx={Math.min(8,Math.max(2,(low-high)/2))} fill={`url(#${gradientId})`} opacity=".9"><title>{`${dateLabel(date)}: 통증 ${r[0]}–${r[1]}`}</title></rect><text x={x(i)} y={high-9} textAnchor="middle" className="trend-range-value" aria-label={`최댓값 ${r[1]}`}>{r[1]}</text><text x={x(i)} y={low+17} textAnchor="middle" className="trend-range-value" aria-label={`최솟값 ${r[0]}`}>{r[0]}</text></g>;})}
      <path d={line} fill="none" stroke="#183b55" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"/>
-     {slots.map(({date,record},i)=>record&&record.sessions.some(s=>s.minutes.some(m=>m!==''))?<g key={date}><circle cx={x(i)} cy={yTime(total(record))} r={4.5} fill="#fff" stroke="#183b55" strokeWidth={2.5}><title>{dateLabel(date)}: 운동 {total(record)}분</title></circle><text x={x(i)} y={yTime(total(record))-12} textAnchor="middle" className="trend-time-value">{total(record)}분</text></g>:null)}
+     {slots.map(({date,record},i)=>record&&record.sessions.some(s=>s.minutes.some(m=>m!==''))?<g key={date}><circle cx={x(i)} cy={yTime(total(record))} r={4.5} fill="#fff" stroke="#183b55" strokeWidth={2.5}><title>{`${dateLabel(date)}: 운동 ${total(record)}분`}</title></circle><text x={x(i)} y={timeLabelY(record)} textAnchor="middle" className="trend-time-value">{total(record)}분</text></g>:null)}
     </svg>
     <div className="trend-dates" style={{paddingLeft:left,paddingRight:right,gridTemplateColumns:`repeat(${slots.length},minmax(0,1fr))`}}>
      {slots.map(({date,record})=><div className="trend-day" key={date}><button className="trend-date" disabled={!record} onClick={()=>record&&onOpen(record)} aria-label={`${dateLabel(date)}, ${record?'통증 '+(painRange(record)?.join('–')??'미기록')+', 운동 '+(record.sessions.some(s=>s.minutes.some(m=>m!==''))?total(record)+'분':'미기록')+', 기록 열기':'미기록'}`}><span>{date.slice(5).replace('-','.')}</span><small>{date.slice(0,4)}</small></button><div className="trend-day-icons">{record?.activities.map(a=>{const Icon=activityIcons[a]||Activity;return <button key={a} className="trend-activity-icon" title={a} aria-label={`${dateLabel(date)} ${a} 상세보기`} onClick={()=>onOpen(record)}><Icon size={18}/></button>;})}{record?.customActivity&&<button className="trend-activity-icon custom" title={record.customActivity} aria-label={`${dateLabel(date)} 추가 활동: ${record.customActivity}`} onClick={()=>onOpen(record)}><NotebookPen size={18}/></button>}{!record?.activities.length&&!record?.customActivity&&<span className="trend-no-activity">—</span>}</div></div>)}
