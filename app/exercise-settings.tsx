@@ -1,0 +1,15 @@
+'use client';
+import {useState} from 'react';
+import {Plus,Trash2,Save,Check} from 'lucide-react';
+import {ExerciseSettings,maxExercises,validExercises,exerciseIds} from '@/lib/records';
+
+export default function ExerciseSettingsForm({settings,disabled,onDirty,onSave,onReload}:{settings:ExerciseSettings;disabled:boolean;onDirty:(dirty:boolean)=>void;onSave:(names:string[],ids:string[])=>Promise<boolean>;onReload:()=>Promise<ExerciseSettings|null>}){
+ const [names,setNames]=useState(settings.exercises);
+ const [ids,setIds]=useState(()=>exerciseIds(settings));
+ const [error,setError]=useState('');
+ const [saved,setSaved]=useState(false);
+ const dirty=JSON.stringify([names,ids])!==JSON.stringify([settings.exercises,exerciseIds(settings)]);
+ function update(next:string[],nextIds:string[]=ids){setNames(next);setIds(nextIds);onDirty(JSON.stringify([next,nextIds])!==JSON.stringify([settings.exercises,exerciseIds(settings)]));setError('');setSaved(false);}
+ async function submit(e:React.FormEvent){e.preventDefault();const cleaned=names.map(n=>n.trim());if(!validExercises(cleaned)){setError('운동 이름은 중복 없이 1~40자로 입력해 주세요.');return;}if(await onSave(cleaned,ids)){setNames(cleaned);setSaved(true);}}
+ return <form onSubmit={submit} className="exercise-settings detail-card"><div className="section-title"><h2>운동 설정</h2><span>{names.length}개 / 최대 {maxExercises}개</span></div><p className="settings-help">운동을 추가·삭제하거나 이름을 바꿔 주세요. 저장하면 모든 날짜의 운동표에 바로 반영돼요. 이름을 바꿔도 시간은 유지되고, 삭제한 운동의 시간은 이전 운동 기록에 보관해요.</p><fieldset disabled={disabled} className="entry-fields"><div className="settings-list">{names.map((name,i)=><div className="settings-row" key={ids[i]}><label htmlFor={`exercise-name-${i}`}>운동 {i+1}</label><input className="text-input" id={`exercise-name-${i}`} value={name} maxLength={40} placeholder="운동 이름" onChange={e=>update(names.map((n,j)=>j===i?e.target.value:n))}/><button type="button" className="remove-exercise" aria-label={`운동 ${i+1} 삭제`} disabled={names.length===1} onClick={()=>update(names.filter((_,j)=>j!==i),ids.filter((_,j)=>j!==i))}><Trash2 size={18}/></button></div>)}</div><button type="button" className="add-exercise" disabled={names.length>=maxExercises} onClick={()=>update([...names,''],[...ids,crypto.randomUUID()])}><Plus size={18}/>운동 추가</button></fieldset>{error&&<p role="alert" className="error-box">{error}</p>}<div className="settings-actions"><button type="button" className="settings-reset" disabled={disabled||!dirty} onClick={()=>update(settings.exercises,exerciseIds(settings))}>변경 취소</button><button type="button" className="settings-reset" disabled={disabled||dirty} onClick={async()=>{const latest=await onReload();if(latest){setNames(latest.exercises);setIds(exerciseIds(latest));setSaved(false);setError('');}}}>최신 설정 불러오기</button><button className="save-button" disabled={disabled||!dirty}><Save size={18}/>설정 저장</button></div><p className="settings-status" role="status">{saved?<><Check size={17}/>설정을 저장했어요.</>:dirty?'아직 저장하지 않은 변경 내용이 있어요.':'운동은 최소 1개, 최대 20개까지 등록할 수 있어요.'}</p></form>;
+}
