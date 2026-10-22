@@ -9,8 +9,13 @@ const BadmintonRacket=createLucideIcon('BadmintonRacket',[
  ['ellipse',{cx:'15',cy:'8',rx:'5',ry:'7',transform:'rotate(40 15 8)',key:'head'}],
  ['path',{d:'m10.5 13.5-3 3M3 21l4.5-4.5M12 4l7 6M10 7l7 6M14 3l-4 8M17 4l-5 9M20 6l-5 8',key:'strings'}],
 ]);
+const Swimmer=createLucideIcon('Swimmer',[
+ ['circle',{cx:'17',cy:'5',r:'2.1',fill:'currentColor',stroke:'none',key:'head'}],
+ ['path',{d:'m3 10 5-5 7 7M7 15l5-6',strokeWidth:'2.2',key:'stroke'}],
+ ['path',{d:'M2 17c1.7 0 1.7-1.5 3.4-1.5S7.1 17 8.8 17s1.7-1.5 3.4-1.5S13.9 17 15.6 17s1.7-1.5 3.4-1.5 1.7 1.5 3 1.5M2 21c1.7 0 1.7-1.5 3.4-1.5S7.1 21 8.8 21s1.7-1.5 3.4-1.5S13.9 21 15.6 21s1.7-1.5 3.4-1.5 1.7 1.5 3 1.5',strokeWidth:'1.8',key:'water'}],
+]);
 const activityIcons:Record<string,typeof Bike>={
- '자전거 등하교':Bike,'학교체육활동':BadmintonRacket,'산책':Footprints,'차로외출':Car,
+ '자전거 등하교':Bike,'학교체육활동':BadmintonRacket,'산책':Footprints,'차로외출':Car,'수영':Swimmer,
 };
 
 export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(day:Day)=>void}){
