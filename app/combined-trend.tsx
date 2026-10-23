@@ -56,25 +56,26 @@ export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(da
   const candidates=[point-12,point+20,point-28,point+36];
   return candidates.find(y=>y>=16&&y<=307&&labels.every(label=>Math.abs(y-label)>=15))??point-12;
  };
- let line='';let connected=false;
+ let painLine='';let connected=false;
  slots.forEach(({record},i)=>{
-  const hasTime=record?.sessions.some(s=>s.minutes.some(m=>m!==''));
-  if(!record||!hasTime){connected=false;return;}
-  line+=`${connected?'L':'M'} ${x(i)} ${yTime(total(record))} `;connected=true;
+  const range=record?painRange(record):null;
+  if(!range){connected=false;return;}
+  painLine+=`${connected?'L':'M'} ${x(i)} ${yPain(range[1])} `;connected=true;
  });
  return <TooltipProvider delayDuration={150}><section className="combined-trend">
-  <div className="trend-heading"><h2><Activity size={21}/>통증과 운동의 변화</h2><div className="trend-legend"><span><i className="gradient-key"/>통증 범위</span><span><i className="line-key"/>운동 시간</span></div></div>
+  <div className="trend-heading"><h2><Activity size={21}/>통증과 운동의 변화</h2><div className="trend-legend"><span><i className="gradient-key"/>통증 범위</span><span><i className="line-key"/>일일 최고 통증</span><span><i className="time-bar-key"/>운동 시간</span></div></div>
   <div className="trend-controls"><div className="trend-range-buttons" role="group" aria-label="그래프 기간"><button aria-pressed={range==='recent'} onClick={()=>{setRange('recent');setPageOffset(0);}}>최근 30일</button><button aria-pressed={range==='all'} onClick={()=>setRange('all')}>전체 기록 보기</button></div><span className="trend-period">{slots[0].date.replaceAll('-','.')} – {slots[slots.length-1].date.replaceAll('-','.')}</span>{range==='recent'&&<div className="trend-history-nav"><button disabled={page>=maxPage} onClick={()=>setPageOffset(Math.min(maxPage,page+1))} aria-label="이전 30일 보기">← 이전 30일</button><button disabled={page===0} onClick={()=>setPageOffset(Math.max(0,page-1))} aria-label="다음 30일 보기">다음 30일 →</button><button disabled={page===0} onClick={()=>setPageOffset(0)}>최신 30일</button></div>}</div>
-  <p className="trend-help">통증은 왼쪽 눈금(0–5), 운동 시간은 오른쪽 눈금(분)으로 읽어요. {range==='recent'?'막대 위는 최댓값, 아래는 최솟값이에요.':'전체 기간의 추이를 한눈에 볼 수 있어요.'}</p>
+  <p className="trend-help">통증은 왼쪽 눈금(0–5), 운동 시간은 오른쪽 눈금(분)으로 읽어요. 연한 막대는 운동 시간, 선은 하루 최고 통증이에요. {range==='recent'?'통증 범위 위는 최댓값, 아래는 최솟값이에요.':'전체 기간의 추이를 한눈에 볼 수 있어요.'}</p>
   <div ref={scrollRef} className={`trend-scroll trend-compact ${range==='recent'?'trend-recent':'trend-all'}`} tabIndex={0} role="region" aria-label={range==='recent'?'30일 단위 통증과 운동 그래프':'전체 기록 추이 그래프. 모든 기간이 한 화면에 표시됩니다.'}>
    <div className="trend-canvas" style={{width}}>
-    <svg width="100%" height={range==='all'?345:315} viewBox={`0 0 ${width} ${range==='all'?345:315}`} role="img" aria-label="날짜를 가로축으로 한 통증 최저–최고 범위 막대와 운동 시간 선 그래프">
+    <svg width="100%" height={range==='all'?345:315} viewBox={`0 0 ${width} ${range==='all'?345:315}`} role="img" aria-label="날짜를 가로축으로 한 통증 최저–최고 범위, 일일 최고 통증 선과 운동 시간 막대 그래프">
      <defs><linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1={0} y1={bottom} x2={0} y2={top} colorInterpolation="sRGB"><stop offset="0%" stopColor="#3273ed"/><stop offset="20%" stopColor="#3273ed"/><stop offset="40%" stopColor="#facc15"/><stop offset="60%" stopColor="#f97316"/><stop offset="80%" stopColor="#ef4444"/><stop offset="100%" stopColor="#ef4444"/></linearGradient></defs>
      <text x={left-12} y={20} textAnchor="end" className="trend-axis-label">통증</text><text x={width-right+12} y={20} className="trend-axis-label">분</text>
      {[0,1,2,3,4,5].map(n=><g key={n}><line x1={left} x2={width-right} y1={yPain(n)} y2={yPain(n)} stroke="#e4eaf3" strokeDasharray={n?'3 5':undefined}/><text x={left-14} y={yPain(n)+5} textAnchor="end" className="trend-tick">{n}</text><text x={width-right+14} y={yPain(n)+5} className="trend-tick">{Math.round(maxTime*n/5)}</text></g>)}
-     {slots.map(({date,record},i)=>{const r=record?painRange(record):null;if(!r)return null;const high=yPain(r[1]),low=yPain(r[0]);return <g key={date}><rect x={x(i)-barWidth/2} y={high===low?high-2:high} width={barWidth} height={Math.max(4,low-high)} rx={Math.min(8,Math.max(2,(low-high)/2))} fill={`url(#${gradientId})`} opacity=".9"><title>{`${dateLabel(date)}: 통증 ${r[0]}–${r[1]}`}</title></rect>{showLabel(i)&&<text x={x(i)} y={high-9} textAnchor="middle" className="trend-range-value" aria-label={`최댓값 ${r[1]}`}>{r[1]}</text>}{showLabel(i)&&<text x={x(i)} y={low+17} textAnchor="middle" className="trend-range-value" aria-label={`최솟값 ${r[0]}`}>{r[0]}</text>}</g>;})}
-     <path d={line} fill="none" stroke="#183b55" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"/>
-     {slots.map(({date,record},i)=>record&&record.sessions.some(s=>s.minutes.some(m=>m!==''))?<g key={date}>{(range==='recent'||step>=8)&&<circle cx={x(i)} cy={yTime(total(record))} r={Math.min(4,step*.23)} fill="#fff" stroke="#183b55" strokeWidth={2.5}><title>{`${dateLabel(date)}: 운동 ${total(record)}분`}</title></circle>}{showLabel(i)&&<text x={x(i)} y={timeLabelY(record)} textAnchor="middle" className="trend-time-value">{total(record)}</text>}</g>:null)}
+     {slots.map(({date,record},i)=>record&&record.sessions.some(s=>s.minutes.some(m=>m!==''))?<rect key={date} className="trend-time-bar" x={x(i)-Math.min(28,step*.82)/2} y={yTime(total(record))} width={Math.min(28,step*.82)} height={bottom-yTime(total(record))} rx={Math.min(3,step*.15)} fill="#dce7f5"><title>{`${dateLabel(date)}: 운동 ${total(record)}분`}</title></rect>:null)}
+     <path className="trend-pain-line" d={painLine} fill="none" stroke="#183b55" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"/>
+     {slots.map(({date,record},i)=>{const r=record?painRange(record):null;if(!r)return null;const high=yPain(r[1]),low=yPain(r[0]);return <g key={date}><rect x={x(i)-barWidth/2} y={high===low?high-2:high} width={barWidth} height={Math.max(4,low-high)} rx={Math.min(8,Math.max(2,(low-high)/2))} fill={`url(#${gradientId})`} opacity=".9"><title>{`${dateLabel(date)}: 통증 ${r[0]}–${r[1]}`}</title></rect>{(range==='recent'||step>=8)&&<circle cx={x(i)} cy={high} r={Math.min(3,step*.2)} fill="#fff" stroke="#183b55" strokeWidth={2}><title>{`${dateLabel(date)}: 일일 최고 통증 ${r[1]}`}</title></circle>}{showLabel(i)&&<text x={x(i)} y={high-9} textAnchor="middle" className="trend-range-value" aria-label={`최댓값 ${r[1]}`}>{r[1]}</text>}{showLabel(i)&&<text x={x(i)} y={low+17} textAnchor="middle" className="trend-range-value" aria-label={`최솟값 ${r[0]}`}>{r[0]}</text>}</g>;})}
+     {slots.map(({date,record},i)=>record&&record.sessions.some(s=>s.minutes.some(m=>m!==''))&&showLabel(i)?<text key={date} x={x(i)} y={timeLabelY(record)} textAnchor="middle" className="trend-time-value">{total(record)}</text>:null)}
      {range==='all'&&majorDates.map((i,tick)=><g key={slots[i].date}><line x1={x(i)} x2={x(i)} y1={bottom} y2={bottom+5} stroke="#a7b4c8"/><text x={x(i)} y={bottom+25} textAnchor={tick===0?'start':tick===majorDates.length-1?'end':'middle'} className="trend-major-date">{slots[i].date.replaceAll('-','.')}</text></g>)}
     </svg>
     {range==='recent'&&<div className="trend-dates" style={{paddingLeft:left,paddingRight:right,gridTemplateColumns:`repeat(${slots.length},minmax(0,1fr))`}}>
