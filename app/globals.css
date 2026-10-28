@@ -22,3 +22,5 @@
 
 .trend-all{overflow-x:hidden}.trend-major-date{font-size:11px;fill:#526b8f}.trend-history-nav button:disabled{opacity:.4;cursor:default}
 .time-bar-key{display:block;width:16px;height:20px;border-radius:3px;background:#dce7f5}.trend-legend{flex-wrap:wrap;gap:10px 16px}.trend-legend>span{white-space:nowrap}
+
+.trend-activity-icon.medication{color:#dc2626;background:#fef2f2}.trend-activity-icon.medication:hover{background:#fee2e2}.activity-icon-legend .medication{color:#dc2626}

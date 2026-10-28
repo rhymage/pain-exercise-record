@@ -6,7 +6,7 @@ export function validExerciseIds(ids:unknown,count:number):ids is string[] {retu
 export function exerciseIds(value:{exercises?:string[];exerciseIds?:string[]}) {return value.exerciseIds??(value.exercises??exercises).map(name=>`legacy:${name}`);}
 export function validExercises(value:unknown):value is string[] {return Array.isArray(value)&&value.length>=1&&value.length<=maxExercises&&value.every(n=>typeof n==='string'&&n.trim().length>0&&n===n.trim()&&n.length<=40)&&new Set(value).size===value.length;}
 export function exerciseNames(day:Day){return day.exercises??exercises;}
-export const activities = ['자전거 등하교', '학교체육활동', '산책', '차로외출', '수영'];
+export const activities = ['자전거 등하교', '학교체육활동', '산책', '차로외출', '수영', '진통제 복용'];
 export type Session = { pain: string; minutes: string[] };
 export type Day = { date: string; exercises?:string[]; exerciseIds?:string[]; sessions: Session[]; activities: string[]; customActivity: string; notes: string; version: number };
 // Project current settings onto any date without changing or deleting stored times.

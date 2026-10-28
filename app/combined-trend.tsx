@@ -1,7 +1,7 @@
 'use client';
 
 import {useId,useEffect,useRef,useState} from 'react';
-import {Activity, Bike, createLucideIcon, Footprints, Car, NotebookPen, StickyNote} from 'lucide-react';
+import {Activity, Bike, createLucideIcon, Footprints, Car, NotebookPen, StickyNote, Pill} from 'lucide-react';
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip';
 import {Day, dateLabel, weekdayLabel, painRange, total} from '@/lib/records';
 
@@ -15,7 +15,7 @@ const Swimmer=createLucideIcon('Swimmer',[
  ['path',{d:'M2 17c1.7 0 1.7-1.5 3.4-1.5S7.1 17 8.8 17s1.7-1.5 3.4-1.5S13.9 17 15.6 17s1.7-1.5 3.4-1.5 1.7 1.5 3 1.5M2 21c1.7 0 1.7-1.5 3.4-1.5S7.1 21 8.8 21s1.7-1.5 3.4-1.5S13.9 21 15.6 21s1.7-1.5 3.4-1.5 1.7 1.5 3 1.5',strokeWidth:'1.8',key:'water'}],
 ]);
 const activityIcons:Record<string,typeof Bike>={
- '자전거 등하교':Bike,'학교체육활동':BadmintonRacket,'산책':Footprints,'차로외출':Car,'수영':Swimmer,
+ '자전거 등하교':Bike,'학교체육활동':BadmintonRacket,'산책':Footprints,'차로외출':Car,'수영':Swimmer,'진통제 복용':Pill,
 };
 
 export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(day:Day)=>void}){
@@ -79,11 +79,11 @@ export default function CombinedTrend({records,onOpen}:{records:Day[];onOpen:(da
      {range==='all'&&majorDates.map((i,tick)=><g key={slots[i].date}><line x1={x(i)} x2={x(i)} y1={bottom} y2={bottom+5} stroke="#a7b4c8"/><text x={x(i)} y={bottom+25} textAnchor={tick===0?'start':tick===majorDates.length-1?'end':'middle'} className="trend-major-date">{slots[i].date.replaceAll('-','.')}</text></g>)}
     </svg>
     {range==='recent'&&<div className="trend-dates" style={{paddingLeft:left,paddingRight:right,gridTemplateColumns:`repeat(${slots.length},minmax(0,1fr))`}}>
-     {slots.map(({date,record},i)=><div className="trend-day" key={date}><button className="trend-date" disabled={!record} onClick={()=>record&&onOpen(record)} aria-label={`${dateLabel(date)}, ${record?'통증 '+(painRange(record)?.join('–')??'미기록')+', 운동 '+(record.sessions.some(s=>s.minutes.some(m=>m!==''))?total(record)+'분':'미기록')+', 기록 열기':'미기록'}`}><span className={showLabel(i)?'trend-date-label':'trend-date-label sr-only'}>{date.slice(5).replace('-','.')}</span><span className={showLabel(i)?'trend-weekday':'trend-weekday sr-only'}>{weekdayLabel(date).slice(0,1)}</span></button><div className="trend-day-icons">{record?.activities.map(a=>{const Icon=activityIcons[a]||Activity;return <button key={a} className="trend-activity-icon" title={a} aria-label={`${dateLabel(date)} ${a} 상세보기`} onClick={()=>onOpen(record)}><Icon size={18}/></button>;})}{record?.customActivity&&<button className="trend-activity-icon custom" title={record.customActivity} aria-label={`${dateLabel(date)} 추가 활동: ${record.customActivity}`} onClick={()=>onOpen(record)}><NotebookPen size={18}/></button>}{record?.notes.trim()&&<Tooltip><TooltipTrigger asChild><button className="trend-activity-icon memo" aria-label={`${dateLabel(date)} 특이사항 메모 보기`} onClick={()=>onOpen(record)}><StickyNote size={18}/></button></TooltipTrigger><TooltipContent className="trend-note-tooltip" side="top" sideOffset={8} collisionPadding={16}>{record.notes}</TooltipContent></Tooltip>}{!record?.activities.length&&!record?.customActivity&&!record?.notes.trim()&&<span className="trend-no-activity">—</span>}</div></div>)}
+     {slots.map(({date,record},i)=><div className="trend-day" key={date}><button className="trend-date" disabled={!record} onClick={()=>record&&onOpen(record)} aria-label={`${dateLabel(date)}, ${record?'통증 '+(painRange(record)?.join('–')??'미기록')+', 운동 '+(record.sessions.some(s=>s.minutes.some(m=>m!==''))?total(record)+'분':'미기록')+', 기록 열기':'미기록'}`}><span className={showLabel(i)?'trend-date-label':'trend-date-label sr-only'}>{date.slice(5).replace('-','.')}</span><span className={showLabel(i)?'trend-weekday':'trend-weekday sr-only'}>{weekdayLabel(date).slice(0,1)}</span></button><div className="trend-day-icons">{record?.activities.map(a=>{const Icon=activityIcons[a]||Activity;return <button key={a} className={`trend-activity-icon ${a==='진통제 복용'?'medication':''}`} title={a} aria-label={`${dateLabel(date)} ${a} 상세보기`} onClick={()=>onOpen(record)}><Icon size={18}/></button>;})}{record?.customActivity&&<button className="trend-activity-icon custom" title={record.customActivity} aria-label={`${dateLabel(date)} 추가 활동: ${record.customActivity}`} onClick={()=>onOpen(record)}><NotebookPen size={18}/></button>}{record?.notes.trim()&&<Tooltip><TooltipTrigger asChild><button className="trend-activity-icon memo" aria-label={`${dateLabel(date)} 특이사항 메모 보기`} onClick={()=>onOpen(record)}><StickyNote size={18}/></button></TooltipTrigger><TooltipContent className="trend-note-tooltip" side="top" sideOffset={8} collisionPadding={16}>{record.notes}</TooltipContent></Tooltip>}{!record?.activities.length&&!record?.customActivity&&!record?.notes.trim()&&<span className="trend-no-activity">—</span>}</div></div>)}
     </div>}
    </div>
   </div>
-  {range==='recent'&&<div className="activity-icon-legend">{Object.entries(activityIcons).map(([name,Icon])=><span key={name}><Icon size={16}/>{name}</span>)}<span><NotebookPen size={16}/>직접 입력</span><span><StickyNote size={16}/>특이사항 메모</span></div>}
+  {range==='recent'&&<div className="activity-icon-legend">{Object.entries(activityIcons).map(([name,Icon])=><span key={name} className={name==='진통제 복용'?'medication':undefined}><Icon size={16}/>{name}</span>)}<span><NotebookPen size={16}/>직접 입력</span><span><StickyNote size={16}/>특이사항 메모</span></div>}
   <p className="trend-footnote">{range==='recent'?'메모 아이콘에 마우스를 올리면 특이사항이 보여요. 날짜나 아이콘을 누르면 상세 기록이 열려요.':'전체 기록은 주요 날짜만 표시해요. 날짜별 상세 내용과 메모는 최근 30일 보기에서 확인할 수 있어요.'} 기록이 없는 날은 선을 연결하지 않아요.</p>
  </section></TooltipProvider>;
 }
