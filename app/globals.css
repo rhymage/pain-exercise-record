@@ -23,4 +23,4 @@
 .trend-all{overflow-x:hidden}.trend-major-date{font-size:11px;fill:#526b8f}.trend-history-nav button:disabled{opacity:.4;cursor:default}
 .time-bar-key{display:block;width:16px;height:20px;border-radius:3px;background:#dce7f5}.trend-legend{flex-wrap:wrap;gap:10px 16px}.trend-legend>span{white-space:nowrap}
 
-.trend-activity-icon.swimming{color:#163b9c;background:#eaf0ff}.trend-activity-icon.swimming:hover{background:#dbe7ff}.activity-icon-legend .swimming{color:#163b9c}.medication-dot-key{display:block;width:9px;height:9px;flex-shrink:0;border-radius:50%;background:#dc2626}
+.trend-activity-icon.swimming{color:#fff;background:#163b9c}.trend-activity-icon.swimming:hover{background:#102d78}.activity-icon-legend .swimming{color:#163b9c}.medication-dot-key{display:block;width:9px;height:9px;flex-shrink:0;border-radius:50%;background:#dc2626}
